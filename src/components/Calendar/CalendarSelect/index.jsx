@@ -2,23 +2,24 @@
 import FormControl from "@mui/material/FormControl";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import {
+	meetingFilterChange,
 	roomFilterChange,
 	viewFilterChange,
-	meetingFilterChange,
 } from "../../../store/slices/ScheduleManagementSlice/filterCalendarSlice";
-
+import { useTranslation } from "react-i18next";
 function CalendarSelect({ list = [], typeSelect = "view" }) {
 	const {
 		room = 0,
 		meeting = 7,
 		view = "week",
 	} = useSelector((state) => state.filtersCalendar);
+	const { t } = useTranslation();
 	const dispatch = useDispatch();
-	const [selectedValue, setSelectedValue] = useState(() => {
+	const selectedValue = () => {
 		switch (typeSelect) {
 			case "view":
 				return localStorage.getItem("view") || "week";
@@ -29,18 +30,16 @@ function CalendarSelect({ list = [], typeSelect = "view" }) {
 			default:
 				return localStorage.getItem("view") || "week";
 		}
-	});
+	};
 
 	useEffect(() => {
-		if (typeSelect == "meeting" && view == "day") {
-			setSelectedValue(7);
+		if (typeSelect === "meeting" && view === "day") {
 			dispatch(meetingFilterChange(7));
 		}
 	}, [view]);
 
 	const handleChange = (event) => {
 		const { value } = event.target;
-		setSelectedValue(value);
 		switch (typeSelect) {
 			case "view":
 				dispatch(viewFilterChange(value));
@@ -72,7 +71,7 @@ function CalendarSelect({ list = [], typeSelect = "view" }) {
 				},
 			}}>
 			<Select
-				value={selectedValue}
+				value={selectedValue()}
 				onChange={handleChange}
 				displayEmpty
 				sx={{
@@ -82,21 +81,26 @@ function CalendarSelect({ list = [], typeSelect = "view" }) {
 				{typeSelect === "room" && (
 					<MenuItem
 						value={0}
-						sx={{ fontFamily: "Nunito", color: "#7a869a", border: "none" }}>
-						All Room
-					</MenuItem>
-				)}
-				{list.map((item) => (
-					<MenuItem
-						key={uuidv4()}
-						value={typeSelect === "view" ? item?.name : item?.id}
 						sx={{
 							fontFamily: "Nunito",
 							color: "#7a869a",
 							border: "none",
 							textTransform: "capitalize",
 						}}>
-						{item?.name}
+						{t("all-room")}
+					</MenuItem>
+				)}
+				{list.map((item) => (
+					<MenuItem
+						key={uuidv4()}
+						value={typeSelect === "view" ? item?.name : item.id}
+						sx={{
+							fontFamily: "Nunito",
+							color: "#7a869a",
+							border: "none",
+							textTransform: "capitalize",
+						}}>
+						{item?.name ? t(item.name) : ""}
 					</MenuItem>
 				))}
 			</Select>

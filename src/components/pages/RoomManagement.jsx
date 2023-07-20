@@ -1,4 +1,4 @@
-import TableData from "../TableData";
+import TableData from "../Table/TableData";
 
 const RoomManagement = () => {
 	return (

@@ -1,11 +1,16 @@
+/* eslint-disable react-refresh/only-export-components */
 // @ts-nocheck
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import { toast } from "react-toastify";
 import { FakeTableData } from "../../assets/mockData/TableData/FakeTableData";
+import { toast } from "react-toastify";
+import {
+	ConfigColumns,
+	InitialColumns,
+} from "../../assets/mockData/TableData/InitialColumns";
 const initialState = {
 	newRoom: {},
-	roomsbooked: FakeTableData,
+	roomsBooked: FakeTableData,
 	updateRoom: {},
 	deleteRoom: {},
 	lockRoom: {},
@@ -15,6 +20,10 @@ const initialState = {
 	status: false,
 	nonIdealStateStatus: false,
 	statusOfRoom: "",
+	statusOfDialog: "idle",
+	columns: ConfigColumns || InitialColumns,
+	getRoomListStatus: "",
+	searchListRoomsBooked: [],
 	error: "",
 };
 const baseURL = "http://localhost:4001/api";
@@ -41,7 +50,7 @@ const getRoomList = createAsyncThunk(ASYNC_ACTION.GET_ROOM_LIST, async () => {
 	return results.data.content;
 });
 
-const updateRoomInfo = createAsyncThunk(
+const updateRoomInfor = createAsyncThunk(
 	ASYNC_ACTION.UPDATE_ROOM_INFOR,
 	async (data) => {
 		const results = await axios.put(
@@ -92,16 +101,30 @@ const RoomManagementSlice = createSlice({
 		setStatusOfRoom: (state, action) => {
 			state.statusOfRoom = action.payload;
 		},
+		resetStatusOfDialog: (state, action) => {
+			state.statusOfDialog = action.payload;
+		},
+		setColumns: (state, action) => {
+			state.columns = action.payload;
+		},
+		setSearchListRoomsBooked: (state, action) => {
+			state.searchListRoomsBooked = action.payload;
+		},
 	},
 	extraReducers: (builder) => {
 		builder
 			//CREATE_MEETING_ROOM
+			.addCase(createMeetingRoom.pending, (state) => {
+				state.statusOfDialog = "pending";
+			})
 			.addCase(createMeetingRoom.fulfilled, (state, action) => {
-				toast.success("Create new room success !");
+				toast.success("Create new room successfully !");
+				state.statusOfDialog = "fulfilled";
 				state.newRoom = action.payload;
 			})
 			.addCase(createMeetingRoom.rejected, (state, action) => {
 				toast.error("Create new room error !");
+				state.statusOfDialog = "rejected";
 				state.error = action.error.message;
 			})
 
@@ -110,48 +133,62 @@ const RoomManagementSlice = createSlice({
 				state.status = true;
 			})
 			.addCase(getRoomList.fulfilled, (state, action) => {
+				state.getRoomListStatus = "fulfilled";
 				state.nonIdealStateStatus = false;
-				// state.status = false;
-				state.roomsbooked = action.payload;
+				state.roomsBooked = action.payload;
 			})
 			.addCase(getRoomList.rejected, (state, action) => {
+				state.getRoomListStatus = "rejected";
 				state.nonIdealStateStatus = true;
-				// state.status = false;
 				state.error = action.error.message;
 			})
 
 			//UPDATE_ROOM_INFOR
-			.addCase(updateRoomInfo.fulfilled, (state, action) => {
+			.addCase(updateRoomInfor.pending, (state) => {
+				state.statusOfDialog = "pending";
+			})
+			.addCase(updateRoomInfor.fulfilled, (state, action) => {
 				toast.success("Update room successfully !");
+				state.statusOfDialog = "fulfilled";
 				state.updateRoom = action.payload;
 			})
-			.addCase(updateRoomInfo.rejected, (state, action) => {
+			.addCase(updateRoomInfor.rejected, (state, action) => {
 				toast.error("Update room error !");
+				state.statusOfDialog = "rejected";
 				state.error = action.error.message;
 			})
 
 			// DELETE_MEETING_ROOM
+			.addCase(deleteMeetingRoom.pending, (state) => {
+				state.statusOfDialog = "pending";
+			})
 			.addCase(deleteMeetingRoom.fulfilled, (state, action) => {
 				toast.success("Delete room successfully !");
+				state.statusOfDialog = "fulfilled";
 				state.deleteRoom = action.payload;
 			})
 			.addCase(deleteMeetingRoom.rejected, (state, action) => {
 				toast.error("Delete room error !");
+				state.statusOfDialog = "rejected";
 				state.error = action.error.message;
 			})
 
 			//LOCK_MEETING_ROOM
-
+			.addCase(lockMeetingRoom.pending, (state) => {
+				state.statusOfDialog = "pending";
+			})
 			.addCase(lockMeetingRoom.fulfilled, (state, action) => {
 				toast.success(
 					`${
 						state.statusOfRoom === "Locked" ? "Lock" : "Unlock"
 					} room successfully !`,
 				);
+				state.statusOfDialog = "fulfilled";
 				state.lockRoom = action.payload;
 			})
 			.addCase(lockMeetingRoom.rejected, (state, action) => {
 				toast.error("Lock room error !");
+				state.statusOfDialog = "rejected";
 				state.error = action.error.message;
 			})
 
@@ -169,14 +206,20 @@ const RoomManagementSlice = createSlice({
 			});
 	},
 });
-export const { setSortDirection, setSortBy, setStatusOfRoom } =
-	RoomManagementSlice.actions;
+export const {
+	setSortDirection,
+	setSortBy,
+	setStatusOfRoom,
+	resetStatusOfDialog,
+	setColumns,
+	setSearchListRoomsBooked,
+} = RoomManagementSlice.actions;
 export {
 	createMeetingRoom,
-	deleteMeetingRoom,
-	getColorSelection,
 	getRoomList,
+	deleteMeetingRoom,
 	lockMeetingRoom,
-	updateRoomInfo,
+	updateRoomInfor,
+	getColorSelection,
 };
 export default RoomManagementSlice.reducer;

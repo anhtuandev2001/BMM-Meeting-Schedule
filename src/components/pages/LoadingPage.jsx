@@ -1,6 +1,8 @@
+import { useTranslation } from "react-i18next";
 const LoadingPage = () => {
+	const { t } = useTranslation();
 	return (
-		<div>
+		<div className="bg-login">
 			<div className="flex justify-center items-center text-xxl h-screen">
 				<button
 					disabled
@@ -22,7 +24,7 @@ const LoadingPage = () => {
 							fill="#1C64F2"
 						/>
 					</svg>
-					Loading...
+					{t("loading")}...
 				</button>
 			</div>
 		</div>

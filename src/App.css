@@ -22,7 +22,7 @@
 	flex-wrap: wrap;
 	justify-content: center;
 	align-items: center;
-	padding: 15px;
+	/* padding: 15px; */
 	background-repeat: no-repeat;
 	background-position: center;
 	background-size: cover;
@@ -44,14 +44,30 @@
 /* animation */
 
 .slide-in {
+	-webkit-animation-name: show;
 	animation-name: show;
+	-webkit-animation-duration: 0.5s;
 	animation-duration: 0.5s;
 }
 .slide-right-in {
+	-webkit-animation: slideRightIn 0.7s ease-in;
 	animation: slideRightIn 0.7s ease-in;
+}
+.a-show {
+	animation: fadeAction 0.5s ease-in;
 }
 
 /* keyframs  */
+@-webkit-keyframes show {
+	from {
+		height: 0;
+		opacity: 0;
+	}
+	to {
+		height: 100%;
+		opacity: 1;
+	}
+}
 @keyframes show {
 	from {
 		height: 0;
@@ -72,11 +88,33 @@
 	margin-left: -4px;
 }
 
+.MuiBackdrop-root {
+	z-index: 100;
+}
+
+@-webkit-keyframes slideRightIn {
+	0% {
+		right: -300px;
+	}
+	100% {
+		right: 0;
+	}
+}
+
 @keyframes slideRightIn {
 	0% {
 		right: -300px;
 	}
 	100% {
 		right: 0;
+	}
+}
+
+@keyframes fadeAction {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
 	}
 }

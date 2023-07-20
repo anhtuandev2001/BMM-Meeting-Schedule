@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import LeftMenu from "../LeftMenu";
+
 function LayOut() {
 	return (
 		<main className="flex">

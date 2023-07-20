@@ -1,6 +1,11 @@
+/* eslint-disable react-refresh/only-export-components */
 // @ts-nocheck
 import axios from "axios";
+import { DateTime } from "luxon";
 import { createAsyncThunk } from "@reduxjs/toolkit";
+const token =
+	"ya29.a0AWY7CklmamVC9I_PKhZx7NamFrrc9NKdOgR6NP1AA9XP-sr8SIGJwrPBQG4liG9jtmXykCmgGYVi00TFFOu4h_iEDS0XWFmElD-ldroRFvqJIljhy5K_4shOdg10bj7qrsgc3ufZv1FbYos3J5pEyHdIjkviaCgYKAZoSARESFQG1tDrpPac6kijcFpD9iURKef4MXQ0163";
+const baseURL = "http://localhost:4001/api/calendar";
 
 const ASYNC_ACTION = {
 	CREATE_SCHEDULE: "CREATE_SCHEDULE",
@@ -9,20 +14,22 @@ const ASYNC_ACTION = {
 	DELETE_SCHEDULE: "DELETE_SCHEDULE",
 	GET_SCHEDULE_LIST: "GET_SCHEDULE_LIST",
 	GET_COLOR_LIST: "GET_COLOR_LIST",
+	GET_ONE_SCHEDULE: "GET_ONE_SCHEDULE",
 };
 
 const ScheduleListHandle = (schedules, colors) => {
 	const ScheduleList = schedules.map((item) => {
 		const room_id = item.extendedProperties?.private.room_id;
 		const colorValue = colors[item.colorId];
-		const finalStart = new Date(item.start["dateTime"]);
-		const finalEnd = new Date(item.end["dateTime"]);
+		const finalStart = item.start.dateTime;
+		const finalEnd = item.end.dateTime;
 		return {
 			...item,
 			start: finalStart,
 			end: finalEnd,
 			calendarId: room_id,
-			isAllDay: finalStart.getDay() != finalEnd.getDay(),
+			isAllday:
+				Number(finalStart.slice(8, 10)) != Number(finalEnd.slice(8, 10)),
 			backgroundColor: colorValue ? colorValue.background : "",
 			borderColor: colorValue ? colorValue.foreground : "",
 			color: "#000",
@@ -32,7 +39,13 @@ const ScheduleListHandle = (schedules, colors) => {
 	return ScheduleList;
 };
 
-const baseURL = "http://localhost:4001/api/calendar";
+const getSchedule = createAsyncThunk(
+	ASYNC_ACTION.GET_ONE_SCHEDULE,
+	async (id) => {
+		const result = await axios.get(`${baseURL}/schedule/${id}`);
+		return result.data;
+	},
+);
 
 const getColorSelection = createAsyncThunk(
 	ASYNC_ACTION.GET_COLOR_LIST,
@@ -41,11 +54,10 @@ const getColorSelection = createAsyncThunk(
 		return result.data;
 	},
 );
+
 const getScheduleList = createAsyncThunk(
 	ASYNC_ACTION.GET_SCHEDULE_LIST,
 	async () => {
-		const token =
-			"ya29.a0AWY7CklmamVC9I_PKhZx7NamFrrc9NKdOgR6NP1AA9XP-sr8SIGJwrPBQG4liG9jtmXykCmgGYVi00TFFOu4h_iEDS0XWFmElD-ldroRFvqJIljhy5K_4shOdg10bj7qrsgc3ufZv1FbYos3J5pEyHdIjkviaCgYKAZoSARESFQG1tDrpPac6kijcFpD9iURKef4MXQ0163";
 		const timeMin = encodeURIComponent(getTime(0));
 		const timeMax = encodeURIComponent(getTime(1));
 		const config = {
@@ -59,6 +71,7 @@ const getScheduleList = createAsyncThunk(
 		return result.data;
 	},
 );
+
 const createSchedule = createAsyncThunk(
 	ASYNC_ACTION.CREATE_SCHEDULE,
 	async (payload) => {
@@ -66,49 +79,85 @@ const createSchedule = createAsyncThunk(
 		return result.data;
 	},
 );
+
 const updateScheduleInfo = createAsyncThunk(
 	ASYNC_ACTION.UPDATE_SCHEDULE,
-	async (payload) => {
-		let url = `${baseURL}/event/${payload.id}`;
-		const result = await axios.put(url, payload);
+	async (data) => {
+		const config = {
+			method: `put`,
+			url: `${baseURL}/event/${data.id}`,
+			header: {
+				Authorization: `Bearer ${token}`,
+			},
+			data: data.payload,
+		};
+		const result = await axios(config);
 		return result.data;
 	},
 );
+
 const updateScheduleOnDrag = createAsyncThunk(
 	ASYNC_ACTION.UPDATE_SCHEDULE_ON_DRAG,
-	async (event, changes) => {
+	async ({ changes, event }) => {
 		let payload;
 		if (changes.start) {
 			payload = {
-				...event,
+				recurrence: ["RRULE:FREQ=MONTHLY;COUNT=1"],
 				summary: event.title,
 				start: {
-					dateTime: changes.start.toString(),
-					timeZone: "Asia/Ho_Chi_Minh",
+					dateTime: DateTime.fromJSDate(new Date(changes.start))
+						.toString()
+						.slice(0, 16),
+					timeZone: "UTC",
 				},
 				end: {
-					dateTime: changes.end.toString(),
-					timeZone: "Asia/Ho_Chi_Minh",
+					dateTime: DateTime.fromJSDate(new Date(changes.end))
+						.toString()
+						.slice(0, 16),
+					timeZone: "UTC",
 				},
+				is_remove_meet: true,
 				update_type: "single",
 			};
 		} else {
 			payload = {
-				...event,
-				start: event.start,
-				end: changes.end.toString(),
+				summary: event.title,
+				recurrence: ["RRULE:FREQ=MONTHLY;COUNT=1"],
+				start: {
+					dateTime: DateTime.fromJSDate(new Date(event.start))
+						.toString()
+						.slice(0, 16),
+					timeZone: "UTC",
+				},
+				end: {
+					dateTime: DateTime.fromJSDate(new Date(changes.end))
+						.toString()
+						.slice(0, 16),
+					timeZone: "UTC",
+				},
+				extendedProperties: {
+					room_id: event.calendarId,
+				},
+				is_remove_meet: true,
+				update_type: "single",
 			};
 		}
-		let url = `${baseURL}/event/${payload.id}`;
-		const result = await axios.put(url, payload);
+		const config = {
+			method: `put`,
+			header: {
+				Authorization: `Bearer ${token}`,
+			},
+			url: `${baseURL}/event/${event.id}`,
+			data: payload,
+		};
+		const result = await axios(config);
 		return result.data;
 	},
 );
+
 const deleteSchedule = createAsyncThunk(
 	ASYNC_ACTION.DELETE_SCHEDULE,
 	async (payload) => {
-		const token =
-			"ya29.a0AWY7CklmamVC9I_PKhZx7NamFrrc9NKdOgR6NP1AA9XP-sr8SIGJwrPBQG4liG9jtmXykCmgGYVi00TFFOu4h_iEDS0XWFmElD-ldroRFvqJIljhy5K_4shOdg10bj7qrsgc3ufZv1FbYos3J5pEyHdIjkviaCgYKAZoSARESFQG1tDrpPac6kijcFpD9iURKef4MXQ0163";
 		const config = {
 			header: {
 				Authorization: `Bearer ${token}`,
@@ -119,6 +168,7 @@ const deleteSchedule = createAsyncThunk(
 		return result.data;
 	},
 );
+
 const getTime = (additional) => {
 	const millisecond = 604800000;
 	const aWeekBefore = new Date(Date.now() - millisecond);
@@ -138,6 +188,7 @@ const getTime = (additional) => {
 	}
 	return `${year}-${month}-${toDay}T00:00:00+07:00`;
 };
+
 export {
 	createSchedule,
 	updateScheduleInfo,
@@ -146,4 +197,5 @@ export {
 	getScheduleList,
 	ScheduleListHandle,
 	updateScheduleOnDrag,
+	getSchedule,
 };

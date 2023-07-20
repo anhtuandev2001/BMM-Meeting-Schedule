@@ -3,14 +3,15 @@ import { TablePagination } from "@mui/material";
 import pluralize from "pluralize";
 import PropTypes from "prop-types";
 import { useSelector } from "react-redux";
-
+import { useTranslation } from "react-i18next";
 function TablePaginationRoomMeeting({
-	roomsbooked,
+	roomsBooked,
 	pageNumber,
 	setPageNumber,
 	pageSize,
 	setPageSize,
 }) {
+	const { t } = useTranslation();
 	const { nonIdealStateStatus } = useSelector((state) => state.roomManagement);
 	const handleChangePage = (event, newPageNumber) => {
 		setPageNumber(newPageNumber);
@@ -21,7 +22,7 @@ function TablePaginationRoomMeeting({
 		setPageNumber(0);
 	};
 	localStorage.setItem("pageSize", pageSize);
-	const rowsPerPageOptions = [5, 15, 20, 50];
+	const rowsPerPageOptions = [10, 25, 50, 100];
 	const dataType = "Room";
 	return (
 		<TablePagination
@@ -39,15 +40,16 @@ function TablePaginationRoomMeeting({
 			showFirstButton
 			showLastButton
 			component="div"
-			count={nonIdealStateStatus ? 0 : roomsbooked && roomsbooked.length}
+			count={nonIdealStateStatus ? 0 : roomsBooked && roomsBooked.length}
 			page={pageNumber}
 			onPageChange={handleChangePage}
 			rowsPerPage={pageSize}
+			labelRowsPerPage={t(`rows-per-page`)}
 			onRowsPerPageChange={handleChangeRowsPerPage}
 			labelDisplayedRows={({ from, to, count }) =>
-				`${from}-${to} of ${
+				`${from}-${to} ${t(`of`)} ${
 					count !== -1
-						? `${count} ${pluralize(dataType, count)}`
+						? `${count} ${t(pluralize(dataType, count).toLowerCase())}`
 						: `MORE THAN ${to}`
 				}`
 			}
@@ -56,7 +58,7 @@ function TablePaginationRoomMeeting({
 }
 
 TablePaginationRoomMeeting.propTypes = {
-	roomsbooked: PropTypes.array,
+	roomsBooked: PropTypes.array,
 	pageNumber: PropTypes.number,
 	setPageNumber: PropTypes.func.isRequired,
 	pageSize: PropTypes.number,

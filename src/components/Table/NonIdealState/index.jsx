@@ -1,9 +1,11 @@
 // @ts-nocheck
 import { useDispatch } from "react-redux";
-import { getRoomList } from "../../store/slices/roomManagementSlice";
+import { getRoomList } from "../../../store/slices/roomManagementSlice";
 import { IoSearch } from "react-icons/io5";
 import { Button } from "@mui/material";
+import { useTranslation } from "react-i18next";
 function NonIdealState() {
+	const { t } = useTranslation();
 	const dispatch = useDispatch();
 	const handleReloadPage = () => {
 		dispatch(getRoomList());
@@ -29,13 +31,15 @@ function NonIdealState() {
 					</span>
 				</div>
 				<div>
-					<p className="text-xl font-bold text-slate-600">No search results</p>
+					<p className="text-xl font-bold text-slate-600">
+						{t("no-records-found")}
+					</p>
 					<div className="text-sm text-slate-500 mb-6">
-						Please reload the page again.
+						{t("please-reload-the-page-again")}
 					</div>
 				</div>
 				<Button onClick={handleReloadPage} variant="contained" size="small">
-					Reload
+					{t("reload")}
 				</Button>
 			</div>
 		</div>

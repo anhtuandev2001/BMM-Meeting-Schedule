@@ -1,7 +1,8 @@
-import { Route, Routes, useNavigate } from "react-router-dom";
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/rules-of-hooks */
+import { Navigate, Route, Routes } from "react-router-dom";
 
 import {
-	Alo,
 	ErrorPage,
 	LoginPage,
 	MeetSchedule,
@@ -12,64 +13,56 @@ import {
 
 import App from "../../App";
 
-import { useEffect } from "react";
-import { useSelector } from "react-redux";
+import AuthRoute from "./AuthRoute";
 import { selectLoading } from "../../store/slices/userSlice";
+import { useSelector } from "react-redux";
 import LoadingPage from "../pages/LoadingPage";
-import PrivateRoute from "./PrivateRoute";
-import PublicRoute from "./PublicRoute";
-import SuperRoute from "./SuperRoute";
-
+import useAuth from "../../utils/useAuth";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 const Routers = () => {
-	const isLoading = useSelector(selectLoading);
-	const navigate = useNavigate(); // Di chuyển gọi useNavigate ra khỏi điều kiện
-
-	useEffect(() => {
-		if (window.location.pathname === "/") {
-			navigate("/room");
-		}
-	}, [navigate]);
-
-	if (isLoading) {
+	const { loading } = useAuth();
+	if (loading) {
 		return <LoadingPage />;
 	}
-
 	return (
 		<Routes>
 			<Route
 				path="/"
 				element={
-					<PrivateRoute>
+					<AuthRoute routeType="private">
 						<App />
-					</PrivateRoute>
+					</AuthRoute>
 				}>
+				<Route path="/" element={<Navigate to="/room" replace={true} />} />
 				<Route path="room" element={<RoomManagement />} />
 				<Route path="schedule" element={<MeetSchedule />} />
 				<Route path="settings" element={<Setting />} />
 				<Route path="*" element={<ErrorPage />} />
 			</Route>
-			<Route
-				path="/alo"
-				element={
-					<SuperRoute>
-						<Alo />
-					</SuperRoute>
-				}
-			/>
+
 			<Route
 				path="/login"
 				element={
-					<PublicRoute>
+					<AuthRoute routeType="public">
 						<LoginPage />
-					</PublicRoute>
+					</AuthRoute>
 				}
 			/>
+
 			<Route
 				path="/register"
 				element={
-					<PublicRoute>
+					<AuthRoute routeType="public">
 						<RegisterPage />
-					</PublicRoute>
+					</AuthRoute>
+				}
+			/>
+			<Route
+				path="/forgot-password"
+				element={
+					<AuthRoute routeType="public">
+						<ForgotPasswordPage />
+					</AuthRoute>
 				}
 			/>
 		</Routes>

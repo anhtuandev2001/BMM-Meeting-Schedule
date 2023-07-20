@@ -6,17 +6,17 @@ const menuItems = [
 	{
 		to: "/room",
 		icon: <IconMenuRoom />,
-		title: "Room management",
+		title: "room-management",
 	},
 	{
 		to: "/schedule",
 		icon: <IconMenuCalendar />,
-		title: "Meeting Schedule",
+		title: "meeting-schedule",
 	},
 	{
 		to: "/settings",
 		icon: <IconMenuSetting />,
-		title: "Setting",
+		title: "setting",
 	},
 ];
 

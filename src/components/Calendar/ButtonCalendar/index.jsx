@@ -8,8 +8,10 @@ import PropTypes from "prop-types";
 import * as React from "react";
 import CalendarScheduleForm from "../CalendarScheduleForm";
 import IconMore from "../../../assets/icon/IconMore";
+import { useTranslation } from "react-i18next";
 
 function ButtonCalendar({ onModalOpen, onModalClose }) {
+	const { t } = useTranslation();
 	const [anchorEl, setAnchorEl] = React.useState(null);
 	const open = Boolean(anchorEl);
 	const handleClick = (event) => {
@@ -21,7 +23,7 @@ function ButtonCalendar({ onModalOpen, onModalClose }) {
 	return (
 		<React.Fragment>
 			<Box sx={{ display: "flex", alignItems: "center", textAlign: "center" }}>
-				<Tooltip title="More">
+				<Tooltip title={t("more")}>
 					<IconButton
 						onClick={handleClick}
 						size="small"
@@ -84,13 +86,13 @@ function ButtonCalendar({ onModalOpen, onModalClose }) {
 							onModalOpen(
 								<CalendarScheduleForm
 									payload={null}
-									action={"Create"}
-									onModalClose={onModalClose}
+									action="Create"
+									onCloseModal={onModalClose}
 								/>,
 							)
 						}
 						className="bg-[#0052CC] text-white py-2 px-3 rounded-[3px]">
-						Create Schedule
+						{t("create-schedule")}
 					</button>
 				</MenuItem>
 			</Menu>

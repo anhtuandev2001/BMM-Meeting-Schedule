@@ -19,10 +19,13 @@ export const userSlice = createSlice({
 		setLoading: (state, action) => {
 			state.isLoading = action.payload;
 		},
+		setEmailUser: (state, action) => {
+			state.email = action.payload;
+		},
 	},
 });
 
-export const { setUser, setLoading } = userSlice.actions;
+export const { setUser, setLoading, setEmailUser } = userSlice.actions;
 
 export const selectLoading = (state) => state.user.isLoading;
 

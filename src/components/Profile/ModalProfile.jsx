@@ -1,118 +1,88 @@
-import { ErrorMessage, Field, Form, Formik } from "formik";
-import { useEffect, useState } from "react";
-import * as Yup from "yup";
+// @ts-nocheck
+import Box from "@mui/material/Box";
+import Modal from "@mui/material/Modal";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
+import PropTypes from "prop-types";
+import * as React from "react";
+import ChangeAvatar from "./ChangeAvatar";
+import Information from "./ChangeInformation";
 
-export const SignUpForm = () => {
-	// const { currentUser } = useAuth();
-
-	// const changePassword = (currentPassword, newPassword) => {
-	// 	const credential = firebase.auth.EmailAuthProvider.credential(
-	// 		currentUser.email,
-	// 		currentPassword,
-	// 	);
-
-	// 	if (currentPassword === newPassword) {
-	// 		console.log("Mật khẩu mới phải khác với mật khẩu cũ.");
-	// 		return;
-	// 	}
-
-	// 	currentUser
-	// 		.reauthenticateWithCredential(credential)
-	// 		.then(() => {
-	// 			return currentUser.updatePassword(newPassword);
-	// 		})
-	// 		.then(() => {
-	// 			console.log("Mật khẩu đã được thay đổi thành công!");
-	// 		})
-	// 		.catch((error) => {
-	// 			console.log("Lỗi khi thay đổi mật khẩu:", error);
-	// 		});
-	// };
-
-	const [initialValues, setInitialValues] = useState({
-		userName: "",
-		email: "",
-		currentPassword: "",
-		newPassword: "",
-		confirmPassword: "",
-	});
-
-	// useEffect(() => {
-	// 	setInitialValues((state) => {
-	// 		return {
-	// 			...state,
-	// 			email: currentUser?.email,
-	// 			userName: currentUser?.displayName,
-	// 		};
-	// 	});
-	// }, [currentUser]);
+function CustomTabPanel(props) {
+	const { children, value, index, ...other } = props;
 
 	return (
-		<Formik
-			initialValues={initialValues}
-			enableReinitialize={true}
-			validationSchema={Yup.object({
-				userName: Yup.string()
-					.max(15, "Must be 15 characters or less")
-					.required("Required"),
-				email: Yup.string().email("Invalid email address").required("Required"),
-				currentPassword: Yup.string().required("Required"),
-				newPassword: Yup.string()
-					.min(6, "Password must be at least 6 characters")
-					.required("Required"),
-				confirmPassword: Yup.string()
-					.oneOf([Yup.ref("newPassword"), null], "Passwords must match")
-					.required("Required"),
-			})}
-			onSubmit={(values, { setSubmitting }) => {
-				setTimeout(() => {
-					changePassword(values.currentPassword, values.newPassword);
-					setSubmitting(false);
-				}, 400);
-			}}>
-			<Form>
-				<div className="my-4">
-					<label htmlFor="userName" className="mr-3">
-						Name:
-					</label>
-					<Field name="userName" type="text" />
-					<ErrorMessage name="userName" />
-				</div>
-
-				<div className="my-4">
-					<label htmlFor="email" className="mr-3">
-						Email:
-					</label>
-					<Field name="email" type="email" />
-					<ErrorMessage name="email" />
-				</div>
-
-				<div className="my-4">
-					<label htmlFor="currentPassword" className="mr-3">
-						Current Password:
-					</label>
-					<Field name="currentPassword" type="password" />
-					<ErrorMessage name="currentPassword" />
-				</div>
-
-				<div className="my-4">
-					<label htmlFor="newPassword" className="mr-3">
-						New Password:
-					</label>
-					<Field name="newPassword" type="password" />
-					<ErrorMessage name="newPassword" />
-				</div>
-
-				<div className="my-4">
-					<label htmlFor="confirmPassword" className="mr-3">
-						Confirm Password:
-					</label>
-					<Field name="confirmPassword" type="password" />
-					<ErrorMessage name="confirmPassword" />
-				</div>
-
-				<button type="submit">Submit</button>
-			</Form>
-		</Formik>
+		<div
+			className="flex-1"
+			role="tabpanel"
+			hidden={value !== index}
+			id={`simple-tabpanel-${index}`}
+			aria-labelledby={`simple-tab-${index}`}
+			{...other}>
+			{value === index && <Box sx={{ p: 3, height: "100%" }}>{children}</Box>}
+		</div>
 	);
+}
+
+CustomTabPanel.propTypes = {
+	children: PropTypes.node,
+	index: PropTypes.number.isRequired,
+	value: PropTypes.number.isRequired,
 };
+
+function a11yProps(index) {
+	return {
+		id: `simple-tab-${index}`,
+		"aria-controls": `simple-tabpanel-${index}`,
+	};
+}
+
+const style = {
+	position: "absolute",
+	top: "50%",
+	left: "50%",
+	transform: "translate(-50%, -50%)",
+	bgcolor: "background.paper",
+	boxShadow: 24,
+	p: 4,
+	height: "90%",
+	display: "flex",
+	flexDirection: "column",
+};
+
+export default function BasicModal(props) {
+	const { onCloseModal, openModalProfile } = props;
+	const [value, setValue] = React.useState(0);
+
+	const handleChange = (_, newValue) => {
+		setValue(newValue);
+	};
+
+	return (
+		<div className="h-full w-full rounded-sm">
+			<Modal
+				open={openModalProfile}
+				onClose={onCloseModal}
+				aria-labelledby="modal-modal-title"
+				aria-describedby="modal-modal-description">
+				<Box sx={style} className="rounded w-full sm:w-[600px]">
+					<Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+						<Tabs
+							value={value}
+							onChange={handleChange}
+							aria-label="basic tabs example">
+							<Tab label="Information" {...a11yProps(0)} />
+							<Tab label="Avatar" {...a11yProps(1)} />
+						</Tabs>
+					</Box>
+					<CustomTabPanel value={value} index={0}>
+						<Information onCloseModal={onCloseModal} />
+					</CustomTabPanel>
+					<CustomTabPanel value={value} index={1}>
+						<ChangeAvatar onCloseModal={onCloseModal} />
+					</CustomTabPanel>
+				</Box>
+			</Modal>
+		</div>
+	);
+}

@@ -16,10 +16,16 @@ const initialState = {
 	FinalScheduleList: [],
 	createSchedule: {},
 	updateSchedule: {},
+	updateScheduleOnDrag: {},
 	deleteSchedule: {},
 	colorSelection: {},
 	status: {
 		info: "",
+		scheduleColorInfo: "",
+		scheduleListInfo: "",
+		getSchedule: "",
+		updateSchedule: "",
+		deleteSchedule: "",
 		message: "",
 	},
 };
@@ -32,7 +38,19 @@ const ScheduleManagementSlice = createSlice({
 			const schedules = action.payload.ScheduleList;
 			const colors = action.payload.colorSelection;
 			const result = ScheduleListHandle(schedules, colors);
+			state.status = "";
 			state.FinalScheduleList = result;
+		},
+		clearStatus: (state) => {
+			state.status = {
+				info: "",
+				scheduleColorInfo: "",
+				scheduleListInfo: "",
+				getSchedule: "",
+				updateSchedule: "",
+				deleteSchedule: "",
+				message: "",
+			};
 		},
 	},
 	extraReducers: (builder) => {
@@ -41,56 +59,73 @@ const ScheduleManagementSlice = createSlice({
 			.addCase(createSchedule.fulfilled, (state, action) => {
 				toast.success("Create Successfully");
 				state.status = {
-					info: "success",
-					message: "Success",
+					...state.status,
+					createSchedule: "success",
 				};
 				state.createSchedule = action.payload;
 			})
-			.addCase(createSchedule.rejected, (state, action) => {
+			.addCase(createSchedule.rejected, (state) => {
 				toast.error("This room is used on that time");
 				state.status = {
+					...state.status,
+					createSchedule: "error",
 					info: "error",
-					message: action.error.message,
 				};
-				console.log("error :", action);
 			})
 			// updateSchedule
 			.addCase(updateScheduleInfo.fulfilled, (state, action) => {
 				toast.success("Update Successfully");
 				state.status = {
+					...state.status,
+					updateSchedule: "success",
 					info: "success",
 					message: "Success",
 				};
-				state.updateScheduleInfo = action.payload;
+				state.updateSchedule = action.payload;
 			})
 			.addCase(updateScheduleInfo.rejected, (state, action) => {
 				state.status = {
+					...state.status,
+					updateSchedule: "error",
 					info: "error",
 					message: action.error.message,
 				};
+				state.updateSchedule = "error";
 				toast.error("Can't create schedule");
 			})
 			.addCase(updateScheduleOnDrag.fulfilled, (state, action) => {
 				state.status = {
+					...state.status,
+					updateSchedule: "success",
 					info: "success",
 					message: "success",
 				};
-				state.updateScheduleInfo = action.payload;
+				state.updateSchedule = action.payload;
+				toast.success("update successfully");
 			})
-			.addCase(updateScheduleOnDrag.rejected, () => {
+			.addCase(updateScheduleOnDrag.rejected, (state) => {
+				state.updateSchedule = "error";
+				state.status = {
+					...state.status,
+					updateSchedule: "error",
+				};
 				toast.error("Can't update schedule");
 			})
 			//Delete Schedule
 			.addCase(deleteSchedule.fulfilled, (state, action) => {
 				state.status = {
+					...state.status,
+					deleteSchedule: "success",
 					info: "success",
 					message: "Success",
 				};
-				toast.success("Delete success");
+				toast.success("Delete successfully");
 				state.deleteSchedule = action.payload;
 			})
 			.addCase(deleteSchedule.rejected, (state, action) => {
 				state.status = {
+					...state.status,
+					deleteSchedule: "error",
 					info: "error",
 					message: action.error.message,
 				};
@@ -99,34 +134,38 @@ const ScheduleManagementSlice = createSlice({
 			// get color
 			.addCase(getColorSelection.fulfilled, (state, action) => {
 				state.status = {
-					info: "fulfilled",
+					...state.status,
+					scheduleColorInfo: "success",
 					message: "Success",
 				};
 				state.colorSelection = action.payload.content;
 			})
 			.addCase(getColorSelection.rejected, (state) => {
 				state.status = {
-					info: "error",
+					...state.status,
+					scheduleColorInfo: "error",
 					message: "",
 				};
 			})
 			//get Schedule List
 			.addCase(getScheduleList.fulfilled, (state, action) => {
 				state.status = {
-					info: "fulfilled",
-					message: "Success",
+					...state.status,
+					scheduleListInfo: "success",
 				};
 				state.ScheduleList = action.payload.content;
 			})
 			.addCase(getScheduleList.rejected, (state) => {
 				toast.error("No response from server");
 				state.status = {
-					info: "error",
+					...state.status,
+					scheduleListInfo: "error",
 					message: "",
 				};
 				state.ScheduleList = [];
 			});
 	},
 });
-export const { handleFinalScheduleList } = ScheduleManagementSlice.actions;
+export const { handleFinalScheduleList, clearStatus } =
+	ScheduleManagementSlice.actions;
 export default ScheduleManagementSlice.reducer;

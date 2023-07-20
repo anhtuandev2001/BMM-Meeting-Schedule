@@ -1,4 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // @ts-nocheck
+import ReCAPTCHA from "react-google-recaptcha";
 import { signOut } from "firebase/auth";
 import { useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -18,7 +20,14 @@ import IconRules from "../../assets/icon/IconForm/IconRules";
 import { useDispatch, useSelector } from "react-redux";
 import { setUser, setLoading } from "../../store/slices/userSlice";
 import { setError, clearError } from "../../store/slices/errorSlice";
+import { useTranslation } from "react-i18next";
+import Translation from "../Translation";
+
+const siteKey = import.meta.env.VITE_REACT_APP_RECAPTCHA_KEY;
+
 const RegisterPage = () => {
+	const { t, i18n } = useTranslation();
+
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const user = useSelector((state) => state.user);
@@ -28,6 +37,7 @@ const RegisterPage = () => {
 	const [passwordVisible, setPasswordVisible] = useState(false);
 	const [confirmPassword, setConfirmPassword] = useState(false);
 	const [inputError, setInputError] = useState(false);
+	const [captchaValue, setCaptchaValue] = useState(null);
 
 	const passwordRules = [
 		"Be at least 6 characters",
@@ -36,7 +46,9 @@ const RegisterPage = () => {
 		"	Have at least one uppercase letter",
 		"	Have at least one lowercase letter",
 	];
-
+	const handleCaptchaChange = useCallback((value) => {
+		setCaptchaValue(value);
+	}, []);
 	const handleInputChange = useCallback(
 		(event) => {
 			const { name, value } = event.target;
@@ -71,50 +83,50 @@ const RegisterPage = () => {
 			};
 
 			validator.validate(["username"], username, () => {
-				handleValidationError(
-					"username",
-					"Username should be 3-16 characters and shouldn't include any special character!",
-				);
+				handleValidationError("username", t("user-name-validate-message"));
 			});
 
 			validator.validate(["password"], password, () => {
 				if (password.length < 6) {
 					handleValidationError(
 						"password",
-						"Password should be at least 6 characters long",
+						t("password-validate-message-empty"),
 					);
 				} else {
 					handleValidationError(
 						"password",
-						"Password should include at least 1 letter, 1 number, and 1 special character",
+						t("password-validate-message-type"),
 					);
 				}
 			});
 
 			validator.validate(["email"], email, () => {
-				handleValidationError("email", "It should be a valid email address!");
+				handleValidationError("email", t("email-validate-message-type"));
 			});
 			validator.validate(["empty"], email, () => {
-				handleValidationError("email", "Please fill in your email");
+				handleValidationError("email", t("email-validate-message-empty"));
 			});
 			validator.validate(["empty"], confirmPassword, () => {
 				handleValidationError(
 					"confirmPassword",
-					"Please fill in your confirm password",
+					t("confirm-password-validate-message-empty"),
 				);
 			});
 			validator.validate(["empty"], username, () => {
-				handleValidationError("username", "Please fill in your name");
+				handleValidationError(
+					"username",
+					t("user-name-validate-message-empty"),
+				);
 			});
 			validator.validate(["empty"], password, () => {
-				handleValidationError("password", "Please fill in your password");
+				handleValidationError("password", t("password-validate-message-empty"));
 			});
 
 			if (confirmPassword === "" || user.password !== confirmPassword) {
 				setErrConfirmPassword(
 					confirmPassword === ""
-						? "Please fill in your confirm password"
-						: "Password do not match",
+						? t("password-validate-message-empty")
+						: t("confirm-password-validate-message-not-match"),
 				);
 				isValid = false;
 				setTimeout(() => {
@@ -131,11 +143,15 @@ const RegisterPage = () => {
 				error.email ||
 				error.username ||
 				error.password ||
-				error.confirmPassword
+				error.confirmPassword ||
+				!captchaValue
 			) {
 				isValid = false;
 			}
 			if (!isValid) {
+				if (!captchaValue) {
+					toast.error("Please complete the captcha.");
+				}
 				return;
 			}
 
@@ -146,6 +162,7 @@ const RegisterPage = () => {
 					user.email,
 					user.password,
 				);
+				await signOut(auth);
 				const users = userCredential.user;
 				const userId = users.uid;
 				const displayName = user.username;
@@ -164,8 +181,8 @@ const RegisterPage = () => {
 					displayName: displayName,
 					createdAt: serverTimestamp(),
 				});
+
 				dispatch(setLoading(false));
-				await signOut(auth);
 				toast.success("Successful create account !");
 				navigate("/login");
 			} catch (error) {
@@ -174,13 +191,10 @@ const RegisterPage = () => {
 				if (errorCode === "auth/weak-password") {
 					handleValidationError(
 						"password",
-						"The password should be at least 6 characters long",
+						t("password-validate-message-length"),
 					);
 				} else if (errorCode === "auth/email-already-in-use") {
-					handleValidationError(
-						"email",
-						"This email address is already in use. Please use a different email.",
-					);
+					handleValidationError("email", t("email-validate-message-defined"));
 				} else {
 					console.log(errorMessage);
 				}
@@ -196,6 +210,7 @@ const RegisterPage = () => {
 			setErrConfirmPassword,
 			setInputError,
 			confirmPassword,
+			captchaValue,
 			dispatch,
 		],
 	);
@@ -217,28 +232,28 @@ const RegisterPage = () => {
 							<div className="form w-full bg-gradient-to-b from-indigo-500 rounded-2xl shadow-2xl pt-9 pr-9 pl-9 pb-7 ">
 								<div className=" flex justify-center items-center pb-9 ml-[135px] mr-[135px]">
 									<div className="bg-white p-8 rounded-full">
-										<img src={logo} alt="" className="h-[120px] w-[120px]" />
+										<img src={logo} alt="" className="h-[90px] w-[90px]" />
 									</div>
 								</div>
 								<form
 									className="flex flex-col items-center"
 									onSubmit={handleSubmit}>
-									<div className=" flex justify-center items-center pb-9 ">
+									<div className=" flex justify-center items-center pb-4 ">
 										<h2 className="text-[20px] font-bold text-white	">
-											REGISTRATION
+											{t("registration")}
 										</h2>
 									</div>
 									<div className="flex flex-col w-[400px] relative">
 										<label className="text-[#2F3F73] font-semibold text-lg">
-											Email
+											{t("email")}
 										</label>
 										<input
-											placeholder="Email"
+											placeholder={t("email")}
 											type="text"
 											name="email"
 											value={user.email}
 											onChange={handleInputChange}
-											className={`w-full mb-[10px] mt-[10px] h-[56px] outline-0 p-[10px] rounded-md ${
+											className={`w-full mb-[10px] mt-[10px] h-[45px] outline-0 p-[10px] rounded-md ${
 												inputError && error.email
 													? "border-red-500 border-2 border-solid"
 													: ""
@@ -255,15 +270,15 @@ const RegisterPage = () => {
 
 									<div className="flex flex-col w-[400px]">
 										<label className="text-[#2F3F73] font-semibold text-lg">
-											User Name
+											{t("user-name")}
 										</label>
 										<input
-											placeholder="UserName"
+											placeholder={t("user-name")}
 											type="text"
 											name="username"
 											value={user.username}
 											onChange={handleInputChange}
-											className={`w-full mb-[10px] mt-[10px] h-[56px] outline-0 p-[10px] rounded-md ${
+											className={`w-full mb-[10px] mt-[10px] h-[45px] outline-0 p-[10px] rounded-md ${
 												inputError && error.username
 													? "border-red-500 border-2 border-solid"
 													: ""
@@ -279,7 +294,7 @@ const RegisterPage = () => {
 									</div>
 									<div className="flex flex-col w-[400px]">
 										<div className="text-[#2F3F73] font-semibold text-lg flex items-center">
-											Password
+											{t("password")}
 											<div
 												data-tooltip-target="tooltip-bottom"
 												data-tooltip-placement="bottom"
@@ -300,13 +315,13 @@ const RegisterPage = () => {
 										</div>
 										<div className="relative">
 											<input
-												placeholder="Password"
+												placeholder={t("password")}
 												type={passwordVisible ? "text" : "password"}
 												name="password"
 												value={user.password}
 												onChange={handleInputChange}
 												autoComplete="new-password"
-												className={`w-full mb-[10px] mt-[10px] h-[56px] outline-0 border-2 p-[10px] rounded-md ${
+												className={`w-full mb-[10px] mt-[10px] h-[45px] outline-0 border-2 p-[10px] rounded-md ${
 													inputError && error.password
 														? "border-red-500 border-2 border-solid"
 														: ""
@@ -329,18 +344,18 @@ const RegisterPage = () => {
 									</div>
 									<div className="flex flex-col w-[400px]">
 										<label className="text-[#2F3F73] font-semibold text-lg">
-											Confirm Password
+											{t("confirm-password")}
 										</label>
 
 										<div className="relative">
 											<input
-												placeholder="Re-type Password"
+												placeholder={t("confirm-password")}
 												type={confirmPassword ? "text" : "password"}
 												name="confirmPassword"
 												value={user.confirmPassword}
 												onChange={handleInputChange}
 												autoComplete="new-password1"
-												className={`w-full mb-[10px] mt-[10px] h-[56px] outline-0 border-2 p-[10px] rounded-md ${
+												className={`w-full mb-[10px] mt-[10px] h-[45px] outline-0 border-2 p-[10px] rounded-md ${
 													inputError && errConfirmPassword
 														? "border-red-500 border-2 border-solid"
 														: ""
@@ -361,24 +376,36 @@ const RegisterPage = () => {
 											  )
 											: null}
 									</div>
+									<div className="py-4">
+										<ReCAPTCHA
+											className="mt-2"
+											sitekey={siteKey}
+											onChange={handleCaptchaChange}
+											hl={i18n.language}
+										/>
+									</div>
+
 									<div className="pt-[5px]">
 										<button className="relative inline-flex  items-center justify-center p-0.5 mb-2 mr-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-cyan-500 to-blue-500 group-hover:from-cyan-500 group-hover:to-blue-500 hover:text-white dark:text-white ">
-											<span className="relative px-[70px] py-[20px] transition-all ease-in duration-75 bg-white dark:bg-[#2F3F73] rounded-md group-hover:bg-opacity-0">
-												REGISTER
+											<span className="relative px-[70px] py-[15px] transition-all ease-in duration-75 bg-white dark:bg-[#2F3F73] rounded-md group-hover:bg-opacity-0">
+												{t("register")}
 											</span>
 										</button>
 									</div>
 									<h5 className="text-[16px] pt-[1.5rem] mx-auto  ">
-										Already have an account?
+										{t("already-have-an-account")}
 										<span className="ml-[5px]">
 											<Link
 												className="text-[#2F3F73] font-semibold"
 												to="/login">
-												Log in
+												{t("login")}
 											</Link>
 										</span>
 									</h5>
 								</form>
+								<div className="mx-auto max-w-[120px] bg-white rounded-[3px] mt-[16px]">
+									<Translation />
+								</div>
 							</div>
 						</div>
 					</div>

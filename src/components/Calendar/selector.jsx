@@ -2,15 +2,25 @@ import { createSelector } from "reselect";
 
 export const filterRoomSelector = (state) => state.filtersCalendar?.room;
 export const filterMeetingSelector = (state) => state.filtersCalendar?.meeting;
+export const filterCheckboxSelector = (state) => state.filtersCalendar?.checked;
+export const userSelector = (state) => state.user?.email;
 export const scheduleListSelector = (state) =>
 	state.scheduleManagement?.FinalScheduleList;
 
 export const scheduleListRemainingSelector = createSelector(
 	filterMeetingSelector,
 	filterRoomSelector,
+	filterCheckboxSelector,
+	userSelector,
 	scheduleListSelector,
-	(filterMeeting = 7, filterRoom = 0, scheduleList = []) => {
-		if (filterMeeting == 7 && filterRoom == 0) {
+	(
+		filterMeeting = 7,
+		filterRoom = 0,
+		checked = false,
+		email = "",
+		scheduleList = [],
+	) => {
+		if (filterMeeting == 7 && filterRoom == 0 && !checked) {
 			return scheduleList;
 		}
 		return scheduleList.filter((item) => {
@@ -25,17 +35,31 @@ export const scheduleListRemainingSelector = createSelector(
 						? dayStartOfWeek - index
 						: dayStartOfWeek + index,
 			);
-			console.log(item.extendedProperties.private.room_id, filterRoom);
-			return (
-				(filterMeeting !== 7 &&
-					filterRoom === 0 &&
-					range.includes(filterMeeting)) ||
-				(filterRoom !== 0 &&
-					filterMeeting == 7 &&
-					item.extendedProperties.private.room_id == filterRoom) ||
-				(item.extendedProperties.private.room_id == filterRoom &&
-					range.includes(filterMeeting))
-			);
+			const { attendees = [] } = item;
+			const isEmail = attendees.some((item) => {
+				return item.email == email;
+			});
+			if (filterMeeting == 7 && filterRoom == 0 && checked) {
+				return isEmail;
+			}
+			return checked
+				? (isEmail &&
+						filterMeeting != 7 &&
+						filterRoom == 0 &&
+						range.includes(filterMeeting)) ||
+						(filterRoom != 0 &&
+							filterMeeting == 7 &&
+							item?.extendedProperties?.private?.room_id == filterRoom) ||
+						(item?.extendedProperties?.private?.room_id == filterRoom &&
+							range.includes(filterMeeting))
+				: (filterMeeting != 7 &&
+						filterRoom == 0 &&
+						range.includes(filterMeeting)) ||
+						(filterRoom != 0 &&
+							filterMeeting == 7 &&
+							item?.extendedProperties?.private?.room_id == filterRoom) ||
+						(item?.extendedProperties?.private?.room_id == filterRoom &&
+							range.includes(filterMeeting));
 		});
 	},
 );

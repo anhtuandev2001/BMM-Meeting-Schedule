@@ -6,6 +6,7 @@ const filtersSlice = createSlice({
 		view: localStorage.getItem("view") || "week",
 		room: 0,
 		meeting: 7,
+		checked: false,
 	},
 	reducers: {
 		viewFilterChange: (state, action) => {
@@ -17,9 +18,16 @@ const filtersSlice = createSlice({
 		meetingFilterChange: (state, action) => {
 			state.meeting = action.payload;
 		},
+		checkboxFilterChange: (state, action) => {
+			state.checked = action.payload;
+		},
 	},
 });
 
-export const { viewFilterChange, roomFilterChange, meetingFilterChange } =
-	filtersSlice.actions;
+export const {
+	viewFilterChange,
+	roomFilterChange,
+	meetingFilterChange,
+	checkboxFilterChange,
+} = filtersSlice.actions;
 export default filtersSlice.reducer;
